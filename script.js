@@ -168,9 +168,11 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") toggleMenu(f
 /* ---------- 4. ПЛЕЕР ---------- */
 // TODO: вставь свои треки (положи mp3 в assets/music/ и поправь пути)
 const playlist = [
-  { title: "Track 1", artist: "Artist", src: "assets/music/track1.mp3" },
-  { title: "Track 2", artist: "Artist", src: "assets/music/track2.mp3" },
-  { title: "Track 3", artist: "Artist", src: "assets/music/track3.mp3" }
+  { title: "Сейчас", artist: "NEWLIGHTCHILD", src: "assets/music/track1.mp3" },
+  { title: "Rendez-Vous", artist: "Океан Ельзи", src: "assets/music/track2.mp3" },
+  { title: "Райские цветы", artist: "Пошлая Молли", src: "assets/music/track3.mp3" }
+  { title: "Нету чувств", artist: "Акустическая травма", src: "assets/music/track4.mp3" }
+  { title: "По щекам", artist: "Уникален", src: "assets/music/track5.mp3" }
 ];
 
 const audio = new Audio();
