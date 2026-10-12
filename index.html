@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lirikus</title>
+  <meta name="description" content="Lirikus — video editing & programming">
+  <meta name="theme-color" content="#0a0a0a">
+  <!-- Favicon встроен в код. Замени на свой: <link rel="icon" href="assets/favicon.png"> -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='32' fill='%23161616'/%3E%3Ctext x='32' y='43' font-size='34' text-anchor='middle' fill='%23c9c9c9' font-family='sans-serif' font-weight='700'%3EK%3C/text%3E%3C/svg%3E">
+  <!-- Шрифт (опционально): если удалить эти 3 строки, будет системный sans-serif -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Фон: ночной лес (деревья и звёзды рисуются в script.js) -->
+  <div class="forest" aria-hidden="true">
+    <div class="sky"></div>
+    <!-- Фото леса: положи файл assets/forest.jpg (подставится автоматически) -->
+    <div class="forest__photo" id="forestPhoto"></div>
+    <div class="stars" id="stars"></div>
+    <div class="moon"></div>
+    <div id="treeLayers"></div>
+    <div class="fog fog--1"></div>
+    <div class="fog fog--2"></div>
+  </div>
+  <div class="grain" aria-hidden="true"></div>
+
+  <!-- 0. ЭКРАН ВЫБОРА ЯЗЫКА -->
+  <div class="lang-overlay" id="langOverlay" role="dialog" aria-modal="true" aria-labelledby="langOverlayTitle" hidden>
+    <div class="lang-overlay__box">
+      <h1 class="lang-overlay__title" id="langOverlayTitle">
+        Choose your language<br>Выберите язык<br>Vyberte jazyk<br>Оберіть мову
+      </h1>
+      <div class="lang-overlay__buttons">
+        <button class="lang-btn" data-lang="ru" type="button">Русский</button>
+        <button class="lang-btn" data-lang="en" type="button">English</button>
+        <button class="lang-btn" data-lang="cs" type="button">Čeština</button>
+        <button class="lang-btn" data-lang="uk" type="button">Українська</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Переключатель языка (правый верхний угол) -->
+  <div class="lang-switch" id="langSwitch">
+    <button class="lang-switch__btn" id="langSwitchBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Language">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.8 3 2.8 15 0 18"/><path d="M12 3c-2.8 3-2.8 15 0 18"/></svg>
+      <span id="langCurrent">RU</span>
+    </button>
+    <ul class="lang-switch__menu" id="langMenu" hidden>
+      <li><button type="button" data-lang="ru">Русский</button></li>
+      <li><button type="button" data-lang="en">English</button></li>
+      <li><button type="button" data-lang="cs">Čeština</button></li>
+      <li><button type="button" data-lang="uk">Українська</button></li>
+    </ul>
+  </div>
+
+  <main class="container">
+
+    <!-- 1. ЛИЧНАЯ ИНФОРМАЦИЯ -->
+    <header class="hero reveal">
+      <!-- Аватарка: положи свою фотку как assets/avatar.jpg (квадратную или любую — обрежется по кругу сама) -->
+      <div class="avatar" id="avatar">
+        <span class="avatar__letter" aria-hidden="true">K</span>
+        <img class="avatar__img" id="avatarImg" alt="Lirikus">
+      </div>
+      <h2 class="hero__nick">Lirikus</h2>
+      <p class="hero__alt"><span data-i18n="alt_nick">Альтернативный ник</span>: Lirik</p>
+    </header>
+
+    <section class="card reveal" aria-labelledby="aboutTitle">
+      <h3 class="section-title" id="aboutTitle" data-i18n="about_title">Обо мне</h3>
+      <dl class="info">
+        <div class="info__row"><dt data-i18n="name_label">Имя</dt><dd data-i18n="name_value">Кирилл</dd></div>
+        <div class="info__row"><dt data-i18n="gender_label">Пол</dt><dd data-i18n="gender_value">Мужской</dd></div>
+        <div class="info__row">
+          <dt data-i18n="status_label">Статус</dt>
+          <dd>
+            <span class="badge badge--status">
+              <svg class="pulse" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>
+              <span data-i18n="status_value">Свободен</span>
+            </span>
+          </dd>
+        </div>
+        <div class="info__row"><dt data-i18n="bd_label">День рождения</dt><dd>14.06.2012</dd></div>
+        <div class="info__row"><dt data-i18n="from_label">Родом из</dt><dd data-i18n="from_value">Херсон, Украина</dd></div>
+        <div class="info__row">
+          <dt data-i18n="clan_label">Клан</dt>
+          <dd>LrKsTeam <span class="badge badge--leader">Leader</span></dd>
+        </div>
+      </dl>
+    </section>
+
+    <!-- 2. ЧЕМ Я ЗАНИМАЮСЬ -->
+    <section aria-labelledby="servicesTitle" class="reveal">
+      <h3 class="section-title" id="servicesTitle" data-i18n="services_title">Чем я занимаюсь</h3>
+      <div class="grid">
+
+        <article class="card card--hover">
+          <div class="card__icon">
+            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9.5v5l4.5-2.5z"/></svg>
+          </div>
+          <h4 class="card__title" data-i18n="edit_title">Монтаж видео</h4>
+          <p class="card__sub" data-i18n="edit_sub">На заказ</p>
+          <ul class="price-list">
+            <li><span data-i18n="edit_short">Короткие видео (Reels/Shorts/TikTok)</span><strong data-i18n="edit_short_price">$15 за видео</strong></li>
+            <li><span data-i18n="edit_long">Длинные видео</span><strong data-i18n="edit_long_price">$3 за 1 минуту</strong></li>
+          </ul>
+          <p class="card__note" data-i18n="edit_note">Правки и срочность обсуждаются отдельно.</p>
+        </article>
+
+        <article class="card card--hover">
+          <div class="card__icon">
+            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 7l-5 5 5 5"/><path d="M16 7l5 5-5 5"/><path d="M14 4l-4 16"/></svg>
+          </div>
+          <h4 class="card__title" data-i18n="code_title">Программирование</h4>
+          <p class="card__sub" data-i18n="code_sub">Кодинг</p>
+          <ul class="price-list">
+            <li><span>C++</span><strong>Middle</strong></li>
+            <li><span>Python</span><strong>Middle</strong></li>
+            <li><span data-i18n="code_price_label">Прайс</span><strong data-i18n="code_price_value">Договорной</strong></li>
+          </ul>
+          <p class="card__note" data-i18n="code_note">Зависит от объёма работы, сложности и дедлайна.</p>
+          <a class="btn" href="https://t.me/code_exit_404" target="_blank" rel="noopener" data-i18n="discuss_btn">Обсудить проект</a>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- 3. СОЦСЕТИ -->
+    <section aria-labelledby="socialsTitle" class="reveal">
+      <h3 class="section-title" id="socialsTitle" data-i18n="socials_title">Соцсети</h3>
+      <div class="socials">
+        <a class="social" href="https://t.me/code_exit_404" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 4L3 11l6 2.5L11 20l3-4.5 5 3.5z"/><path d="M9 13.5L21 4"/></svg>
+          <span class="link-underline">Telegram</span>
+        </a>
+        <a class="social" href="https://instagram.com/lrksteam" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8"/></svg>
+          <span class="link-underline">Instagram</span>
+        </a>
+        <a class="social" href="https://ngl.link/lrks2" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M9 11h6M9 14h4"/></svg>
+          <span class="link-underline">NGL</span>
+        </a>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <p>© <span id="year">2026</span> Lirikus · LrKsTeam</p>
+  </footer>
+
+  <!-- 5. ПЛЕЕР -->
+  <aside class="player" id="player" aria-label="Music player">
+    <button type="button" class="player__toggle" id="btnMini" aria-label="Collapse player" aria-expanded="true">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    <p class="player__hint" id="playerHint" hidden data-i18n="player_hint">Нажмите play, чтобы включить музыку</p>
+    <div class="player__top">
+      <div class="player__meta">
+        <div class="player__title" id="trackTitle">—</div>
+        <div class="player__artist" id="trackArtist">—</div>
+      </div>
+      <div class="player__controls">
+        <button type="button" id="btnPrev" aria-label="Previous track">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M6 6h2v12H6zM20 6v12L9.5 12z"/></svg>
+        </button>
+        <button type="button" id="btnPlay" class="player__play" aria-label="Play">
+          <svg id="iconPlay" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+          <svg id="iconPause" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" hidden><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
+        </button>
+        <button type="button" id="btnNext" aria-label="Next track">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M16 6h2v12h-2zM4 6l10.5 6L4 18z"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="player__progress">
+      <span id="timeCurrent">0:00</span>
+      <input type="range" id="seek" min="0" max="100" value="0" step="0.1" aria-label="Progress">
+      <span id="timeTotal">0:00</span>
+    </div>
+    <div class="player__volume">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 9a4 4 0 0 1 0 6"/></svg>
+      <input type="range" id="volume" min="0" max="1" value="0.3" step="0.01" aria-label="Volume">
+    </div>
+  </aside>
+
+  <script src="script.js"></script>
+</body>
+</html>
