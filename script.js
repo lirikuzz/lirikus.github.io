@@ -99,7 +99,6 @@ const SUPPORTED = ["ru", "en", "cs", "uk"];
 const STORAGE_KEY = "lirikus_lang";
 let currentLang = "ru";
 
-/* Безопасная работа с localStorage (может быть недоступен) */
 function storageGet(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
 function storageSet(key, val) { try { localStorage.setItem(key, val); } catch (e) { /* игнорируем */ } }
 
@@ -112,26 +111,24 @@ function applyTranslations(code) {
   });
 }
 
-function setLanguage(code, animate = true) {
+function setLanguage(code, animate = true, save = true) {
   if (!SUPPORTED.includes(code)) code = "ru";
   currentLang = code;
-  storageSet(STORAGE_KEY, code);
+  if (save) storageSet(STORAGE_KEY, code);
   document.documentElement.lang = code;
   document.getElementById("langCurrent").textContent = code.toUpperCase();
 
-  // подсветка активного языка в меню
   document.querySelectorAll("#langMenu button").forEach(b =>
     b.classList.toggle("is-active", b.dataset.lang === code));
 
   if (!animate) { applyTranslations(code); refreshTrackInfo(); return; }
 
-  // fade 150ms: скрываем -> меняем текст -> показываем
   document.body.classList.add("is-fading");
   setTimeout(() => {
     applyTranslations(code);
     refreshTrackInfo();
     document.body.classList.remove("is-fading");
-  }, 150);
+  }, 260);
 }
 
 /* ---------- 3. ОВЕРЛЕЙ И ДРОПДАУН ЯЗЫКА ---------- */
@@ -141,14 +138,14 @@ const langMenu = document.getElementById("langMenu");
 
 function hideOverlay() {
   overlay.classList.add("is-hiding");
-  setTimeout(() => { overlay.hidden = true; }, 500);
+  setTimeout(() => { overlay.hidden = true; }, 700);
 }
 
 overlay.querySelectorAll("[data-lang]").forEach(btn => {
   btn.addEventListener("click", () => {
-    setLanguage(btn.dataset.lang, false);
+    setLanguage(btn.dataset.lang, false, true);
     hideOverlay();
-    startMusic(); // клик = жест пользователя, autoplay разрешён
+    startMusic();
   });
 });
 
@@ -166,17 +163,18 @@ document.addEventListener("click", e => {
 document.addEventListener("keydown", e => { if (e.key === "Escape") toggleMenu(false); });
 
 /* ---------- 4. ПЛЕЕР ---------- */
-// TODO: вставь свои треки (положи mp3 в assets/music/ и поправь пути)
 const playlist = [
-  { title: "Сейчас", artist: "NEWLIGHTCHILD", src: "assets/music/track1.mp3" },
-  { title: "Rendez-Vous", artist: "Океан Ельзи", src: "assets/music/track2.mp3" },
-  { title: "Райские цветы", artist: "Пошлая Молли", src: "assets/music/track3.mp3" }
-  { title: "Нету чувств", artist: "Акустическая травма", src: "assets/music/track4.mp3" }
-  { title: "По щекам", artist: "Уникален", src: "assets/music/track5.mp3" }
+  { title: "Райские Цветы", artist: "Пошлая Молли", src: "assets/music/track1.mp3" },
+  { title: "Randez-vous", artist: "Океан Ельзи", src: "assets/music/track2.mp3" },
+  { title: "Нету чувств", artist: "Акустическая травма", src: "assets/music/track3.mp3" },
+  { title: "По щекам", artist: "Уникален", src: "assets/music/track4.mp3" },
+  { title: "СЕЙЧАС", artist: "NEWLIGHTCHILD", src: "assets/music/track5.mp3" },
+  { title: "Толпы", artist: "Madk1d", src: "assets/music/track6.mp3" },
+  { title: "Улетаю", artist: "Xe1to", src: "assets/music/track7.mp3" }
 ];
 
 const audio = new Audio();
-audio.volume = 0.3;          // громкость 30% при старте
+audio.volume = 0.3;
 audio.preload = "metadata";
 let trackIndex = 0;
 let trackBroken = false;
@@ -213,38 +211,41 @@ function loadTrack(i) {
 }
 
 function setPlayingUI(playing) {
-  els.iconPlay.hidden = playing;
-  els.iconPause.hidden = !playing;
+  els.iconPlay.toggleAttribute("hidden", playing);
+  els.iconPause.toggleAttribute("hidden", !playing);
   els.play.setAttribute("aria-label", playing ? "Pause" : "Play");
 }
 
 function playAudio() {
+  if (trackBroken) return;
   const p = audio.play();
   if (p && typeof p.then === "function") {
     p.then(() => { els.hint.hidden = true; })
-     .catch(() => { els.hint.hidden = false; setPlayingUI(false); }); // autoplay заблокирован
+     .catch(() => { els.hint.hidden = false; setPlayingUI(false); });
   }
 }
 
 function startMusic() { playAudio(); }
 
-els.play.addEventListener("click", () => { audio.paused ? playAudio() : audio.pause(); });
+els.play.addEventListener("click", () => {
+  if (trackBroken) return;
+  audio.paused ? playAudio() : audio.pause();
+});
 els.next.addEventListener("click", () => { loadTrack(trackIndex + 1); playAudio(); });
 els.prev.addEventListener("click", () => {
-  // если играет больше 3 сек — перемотать в начало, иначе предыдущий трек
-  if (audio.currentTime > 3) { audio.currentTime = 0; } else { loadTrack(trackIndex - 1); playAudio(); }
+  if (audio.currentTime > 3) { audio.currentTime = 0; }
+  else { loadTrack(trackIndex - 1); playAudio(); }
 });
 
 audio.addEventListener("play", () => setPlayingUI(true));
 audio.addEventListener("pause", () => setPlayingUI(false));
-audio.addEventListener("ended", () => { loadTrack(trackIndex + 1); playAudio(); }); // loop по плейлисту
+audio.addEventListener("ended", () => { loadTrack(trackIndex + 1); playAudio(); });
 audio.addEventListener("loadedmetadata", () => { els.total.textContent = fmt(audio.duration); });
 audio.addEventListener("timeupdate", () => {
   if (audio.duration) els.seek.value = (audio.currentTime / audio.duration) * 100;
   els.cur.textContent = fmt(audio.currentTime);
 });
 audio.addEventListener("error", () => {
-  // файла нет — не зацикливаемся, просто показываем подсказку
   trackBroken = true;
   refreshTrackInfo();
   setPlayingUI(false);
@@ -263,67 +264,18 @@ function initReveal() {
     entries.forEach(e => {
       if (e.isIntersecting) { e.target.classList.add("is-visible"); obs.unobserve(e.target); }
     });
-  }, { threshold: 0.12 });
+  }, { threshold: 0.15, rootMargin: "0px 0px -60px 0px" });
   items.forEach(i => io.observe(i));
 }
 
-/* ---------- 5.1 ФОН: НОЧНОЙ ЛЕС ---------- */
-// Генератор псевдослучайных чисел (лес всегда выглядит одинаково)
-function rng(seed) { return () => (seed = (seed * 16807) % 2147483647) / 2147483647; }
-
-// Одна ёлка: ярусы-треугольники + ствол
-function pine(x, H, h, w) {
-  const tiers = 5, top = H - h, hh = h * 0.88, trunk = w * 0.03;
-  const right = [], left = [];
-  for (let t = 1; t <= tiers; t++) {
-    const y = top + hh * t / tiers, half = w / 2 * t / tiers;
-    right.push([x + half, y], [x + half * 0.4, y]);
-    left.push([x - half, y], [x - half * 0.4, y]);
-  }
-  let d = `M${x.toFixed(1)} ${top.toFixed(1)}`;
-  right.forEach(p => { d += `L${p[0].toFixed(1)} ${p[1].toFixed(1)}`; });
-  d += `L${(x + trunk).toFixed(1)} ${H}L${(x - trunk).toFixed(1)} ${H}`;
-  left.reverse().forEach(p => { d += `L${p[0].toFixed(1)} ${p[1].toFixed(1)}`; });
-  return `<path d="${d}Z"/>`;
-}
-
-function buildLayer(cfg) {
-  const W = 1600, H = 440, r = rng(cfg.seed), step = W / cfg.n;
-  let paths = "";
-  for (let i = 0; i < cfg.n; i++) {
-    const x = (i + 0.5) * step + (r() - 0.5) * step * 0.8;
-    const h = cfg.min + r() * (cfg.max - cfg.min);
-    paths += pine(x, H, h, h * (0.38 + r() * 0.14));
-  }
-  return `<svg class="tree-layer ${cfg.cls}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg"><g fill="${cfg.color}">${paths}</g><rect y="${H - 6}" width="${W}" height="6" fill="${cfg.color}"/></svg>`;
-}
-
-function initForest() {
-  // три слоя: дальний (светлее), средний, ближний (самый тёмный)
-  const layers = [
-    { cls: "tree-layer--far",  seed: 11, n: 28, min: 110, max: 210, color: "#10202d" },
-    { cls: "tree-layer--mid",  seed: 23, n: 16, min: 180, max: 300, color: "#0a141d" },
-    { cls: "tree-layer--near", seed: 37, n: 9,  min: 280, max: 390, color: "#04070b" }
-  ];
-  document.getElementById("treeLayers").innerHTML = layers.map(buildLayer).join("");
-
-  // неподвижные звёзды
-  const r = rng(5);
-  let stars = "";
-  for (let i = 0; i < 70; i++) {
-    const s = r() < 0.2 ? 2 : 1;
-    stars += `<i class="star" style="left:${(r() * 100).toFixed(1)}%;top:${(r() * 100).toFixed(1)}%;width:${s}px;height:${s}px;opacity:${(0.25 + r() * 0.6).toFixed(2)}"></i>`;
-  }
-  document.getElementById("stars").innerHTML = stars;
-}
-
-/* ---------- 5.15 ФОТО ЛЕСА ---------- */
-// Ищет файл с фото леса; если нашёл — ставит его фоном, иначе остаётся рисованный лес
+/* ---------- 5.1 ФОТО ЛЕСА ---------- */
 function initForestPhoto() {
   const forest = document.querySelector(".forest");
   const photo = document.getElementById("forestPhoto");
-  const candidates = ["assets/forest.jpg", "assets/forest.jpeg", "assets/forest.webp", "assets/forest.png",
-                      "forest.jpg", "forest.jpeg", "forest.webp", "forest.png"];
+  const candidates = [
+    "assets/forest.jpg", "assets/forest.jpeg", "assets/forest.webp", "assets/forest.png",
+    "forest.jpg", "forest.jpeg", "forest.webp", "forest.png"
+  ];
   let i = 0;
   const probe = new Image();
   probe.onload = () => {
@@ -335,7 +287,6 @@ function initForestPhoto() {
 }
 
 /* ---------- 5.2 АВАТАРКА ---------- */
-// Пробует несколько путей подряд; если файла нет — остаётся буква "K"
 function initAvatar() {
   const wrap = document.getElementById("avatar");
   const img = document.getElementById("avatarImg");
@@ -355,7 +306,7 @@ function initPlayerToggle() {
     btn.setAttribute("aria-expanded", String(!mini));
     btn.setAttribute("aria-label", mini ? "Expand player" : "Collapse player");
   };
-  setMini(window.matchMedia("(max-width: 767px)").matches); // на телефоне по умолчанию компактный
+  setMini(window.matchMedia("(max-width: 767px)").matches);
   btn.addEventListener("click", () => setMini(!player.classList.contains("player--mini")));
 }
 
@@ -363,7 +314,6 @@ function initPlayerToggle() {
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("year").textContent = new Date().getFullYear();
   loadTrack(0);
-  initForest();
   initForestPhoto();
   initAvatar();
   initPlayerToggle();
@@ -371,11 +321,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const saved = storageGet(STORAGE_KEY);
   if (saved && SUPPORTED.includes(saved)) {
-    // повторный визит: оверлей не показываем
-    setLanguage(saved, false);
-    startMusic(); // браузер может заблокировать — тогда появится подсказка
+    setLanguage(saved, false, false);
+    startMusic();
   } else {
-    setLanguage("ru", false);
+    setLanguage("ru", false, false);
     overlay.hidden = false;
   }
 });
