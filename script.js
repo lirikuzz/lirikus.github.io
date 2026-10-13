@@ -163,12 +163,13 @@ document.addEventListener("click", e => {
 document.addEventListener("keydown", e => { if (e.key === "Escape") toggleMenu(false); });
 
 /* ---------- 4. ПЛЕЕР ---------- */
-/* Оставлены только рабочие треки.
-   Если будешь добавлять новые — просто допиши строку в массив ниже
+/* Оставлены только рабочие треки: track5, track6, track7.
+   Если будешь добавлять новые — допиши строку в массив ниже
    и положи соответствующий mp3 в assets/music/. */
 const playlist = [
-  { title: "Толпы",   artist: "Madk1d", src: "assets/music/track6.mp3" },
-  { title: "Улетаю",  artist: "Xe1to",  src: "assets/music/track7.mp3" }
+  { title: "СЕЙЧАС", artist: "NEWLIGHTCHILD", src: "assets/music/track5.mp3" },
+  { title: "Толпы",  artist: "Madk1d",        src: "assets/music/track6.mp3" },
+  { title: "Улетаю", artist: "Xe1to",         src: "assets/music/track7.mp3" }
 ];
 
 const audio = new Audio();
