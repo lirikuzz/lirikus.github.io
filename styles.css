@@ -41,27 +41,28 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-c
    Рост (transform) идёт через transition отдельно — так нет
    конфликта "animation vs transition на одном свойстве".
 
-   Логика: 0% чёткий → 35% размыт (момент движения) → 100% чёткий.
+   Логика: 0% чёткий → 35% слегка размыт (лёгкий motion blur) → 100% чёткий.
+   Пик намеренно слабый, чтобы не "мылило" содержимое.
    ============================================================ */
 @keyframes blurLg {
   0%   { filter: blur(0); }
-  35%  { filter: blur(6px); }
+  35%  { filter: blur(2.5px); }
   100% { filter: blur(0); }
 }
 @keyframes blurMd {
   0%   { filter: blur(0); }
-  35%  { filter: blur(4.5px); }
+  35%  { filter: blur(2px); }
   100% { filter: blur(0); }
 }
 @keyframes blurSm {
   0%   { filter: blur(0); }
-  35%  { filter: blur(3px); }
+  35%  { filter: blur(1.5px); }
   100% { filter: blur(0); }
 }
 /* Клик — сжатие с blur */
 @keyframes pressBlur {
   0%   { filter: blur(0); }
-  40%  { filter: blur(2px); }
+  40%  { filter: blur(1.4px); }
   100% { filter: blur(0); }
 }
 /* Появление меню языка в углу */
@@ -168,7 +169,7 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-c
 .card { border-radius: var(--radius); padding: 20px; overflow: hidden; }
 
 /* ============================================================
-   HOVER КАРТОЧЕК — плавный рост (transition) + motion blur (animation)
+   HOVER КАРТОЧЕК — плавный рост (transition) + лёгкий motion blur (animation)
    Два разных свойства → нет конфликта → работает везде.
    ============================================================ */
 .card--hover {
@@ -180,14 +181,12 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-c
   will-change: transform, filter;
 }
 .card--hover:hover {
-  /* Растём и чуть приподнимаемся — виден и рост, и лифт */
   transform: translate3d(0, -6px, 0) scale(1.04);
   border-color: rgba(255, 255, 255, 0.28);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.22),
     inset 0 -1px 0 rgba(255, 255, 255, 0.05),
     0 22px 45px rgba(0, 0, 0, 0.45);
-  /* Motion blur — отдельной анимацией на filter */
   animation: blurLg 750ms var(--ease-out-expo);
 }
 
@@ -278,7 +277,8 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-c
 .footer { position: relative; z-index: 2; text-align: center; color: var(--muted); font-size: 0.82rem; padding: 12px 18px 24px; }
 
 /* ============================================================
-   REVEAL — появление секций при скролле (тоже motion blur)
+   REVEAL — появление секций при скролле (motion blur оставлен сильнее,
+   т.к. это разовый эффект "выныривания" целой секции)
    ============================================================ */
 .reveal {
   opacity: 0;
@@ -480,14 +480,14 @@ input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border-radius
   .container { padding-top: 100px; }
 }
 
-/* Мобилка — облегчаем blur */
+/* Мобилка — ещё легче blur (пик 2 / 1.5 / 1 px) */
 @media (max-width: 767px) {
   .reveal { filter: blur(16px); transform: translate3d(0, 34px, 0) scale(0.96); }
   .forest__photo { filter: blur(14px); }
   .avatar__img { filter: blur(12px); }
-  @keyframes blurLg { 0%,100% { filter: blur(0); } 35% { filter: blur(4px); } }
-  @keyframes blurMd { 0%,100% { filter: blur(0); } 35% { filter: blur(3px); } }
-  @keyframes blurSm { 0%,100% { filter: blur(0); } 35% { filter: blur(2px); } }
+  @keyframes blurLg { 0%,100% { filter: blur(0); } 35% { filter: blur(2px); } }
+  @keyframes blurMd { 0%,100% { filter: blur(0); } 35% { filter: blur(1.5px); } }
+  @keyframes blurSm { 0%,100% { filter: blur(0); } 35% { filter: blur(1px); } }
 }
 
 /* Для тех, кто предпочитает меньше движения */
@@ -497,9 +497,4 @@ input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border-radius
   .is-fading [data-i18n] { opacity: 1; filter: none; }
   .forest__photo { filter: none; transform: none; }
   .avatar__img { filter: none; transform: none; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  * { animation: none !important; transition-duration: 0.01ms !important; }
-  .reveal { opacity: 1; transform: none; }
 }
