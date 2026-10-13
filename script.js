@@ -163,14 +163,12 @@ document.addEventListener("click", e => {
 document.addEventListener("keydown", e => { if (e.key === "Escape") toggleMenu(false); });
 
 /* ---------- 4. ПЛЕЕР ---------- */
+/* Оставлены только рабочие треки.
+   Если будешь добавлять новые — просто допиши строку в массив ниже
+   и положи соответствующий mp3 в assets/music/. */
 const playlist = [
-  { title: "Райские Цветы", artist: "Пошлая Молли", src: "assets/music/track1.mp3" },
-  { title: "Randez-vous", artist: "Океан Ельзи", src: "assets/music/track2.mp3" },
-  { title: "Нету чувств", artist: "Акустическая травма", src: "assets/music/track3.mp3" },
-  { title: "По щекам", artist: "Уникален", src: "assets/music/track4.mp3" },
-  { title: "СЕЙЧАС", artist: "NEWLIGHTCHILD", src: "assets/music/track5.mp3" },
-  { title: "Толпы", artist: "Madk1d", src: "assets/music/track6.mp3" },
-  { title: "Улетаю", artist: "Xe1to", src: "assets/music/track7.mp3" }
+  { title: "Толпы",   artist: "Madk1d", src: "assets/music/track6.mp3" },
+  { title: "Улетаю",  artist: "Xe1to",  src: "assets/music/track7.mp3" }
 ];
 
 const audio = new Audio();
@@ -211,6 +209,7 @@ function loadTrack(i) {
 }
 
 function setPlayingUI(playing) {
+  // ВАЖНО: у SVG нет свойства .hidden, поэтому используем атрибут
   els.iconPlay.toggleAttribute("hidden", playing);
   els.iconPause.toggleAttribute("hidden", !playing);
   els.play.setAttribute("aria-label", playing ? "Pause" : "Play");
@@ -321,10 +320,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const saved = storageGet(STORAGE_KEY);
   if (saved && SUPPORTED.includes(saved)) {
+    // пользователь уже выбирал язык — оверлей не показываем
     setLanguage(saved, false, false);
-    startMusic();
+    startMusic(); // может быть заблокировано — тогда появится подсказка
   } else {
-    setLanguage("ru", false, false);
+    setLanguage("ru", false, false); // язык по умолчанию, но БЕЗ сохранения
     overlay.hidden = false;
   }
 });
